@@ -134,15 +134,16 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "-i",
         "--input",
         type=Path,
-        default=Path("NFs"),
-        help="Folder containing .xml files (default: ./NFs)",
+        default=Path("input_folder"),
+        help="Folder containing .xml files (default: ./input_folder)"
+
     )
     p.add_argument(
         "-o",
         "--output",
         type=Path,
-        default=Path("Invoices.xlsx"),
-        help="Output .xlsx file path (default: ./Invoices.xlsx)",
+        default=Path("output_file/Invoices.xlsx"),
+        help="Output .xlsx file path (default: ./output_file/Invoices.xlsx)",
     )
     p.add_argument(
         "-v",

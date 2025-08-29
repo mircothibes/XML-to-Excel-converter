@@ -1,6 +1,6 @@
 # NFe XML → Excel Converter
 
-A simple Python tool to parse **Brazilian electronic invoices (NF-e) XML files** and export key information to **Excel (.xlsx)**.
+A simple Python tool to parse **Electronic invoices (NF-e) XML files** and export key information to **Excel (.xlsx)**.
 
 ## ✨ Features
 - Reads all `.xml` files in a folder (recursive search)

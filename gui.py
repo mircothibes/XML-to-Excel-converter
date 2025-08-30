@@ -197,6 +197,15 @@ class App(ttk.Frame):
         d = filedialog.askdirectory(initialdir=self.input_var.get())
         if d:
             self.input_var.set(d)
+        dir_path = Path(d)
+        xmls = iter_xml_files(dir_path)
+        self._log_clear()
+        self._log(f"Selected folder: {dir_path}\n")
+        self._log(f"Found {len(xmls)} XML file(s).\n")
+        if xmls[:10]:  
+            self._log("Samples:\n - " + "\n - ".join(p.name for p in xmls[:10]) + "\n")
+        if len(xmls) > 10:
+            self._log(f"...and {len(xmls) - 10} more.\n")
 
     def _choose_output(self) -> None:
         initial = Path(self.output_var.get()).parent if self.output_var.get() else Path.cwd()

@@ -2,6 +2,15 @@
 
 A simple Python tool to parse **Electronic invoices (NF-e) XML files** and export key information to **Excel (.xlsx)**.
 
+---
+## 🖼️ Graphical Interface
+
+Here’s how the GUI looks:
+
+![XML to Excel Converter GUI](assets/screenshot_gui.png)
+
+---
+
 ## ✨ Features
 - Reads all `.xml` files in a folder (recursive search)
 - Extracts:

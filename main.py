@@ -2,10 +2,24 @@
 # -*- coding: utf-8 -*-
 
 """
-NFe XML -> Excel Converter
-- Reads all .xml files in a folder (recursively)
-- Extracts key fields: id/key, issuer, recipient, and recipient address
-- Outputs a clean .xlsx file
+NFe XML → Excel Converter (CLI)
+
+This script provides a command-line interface to parse multiple XML invoice files
+(NFe-like structure) from a given input folder and export them into a structured
+Excel spreadsheet (.xlsx).
+
+Main features:
+    - Reads all .xml files in a folder (recursively)
+    - Extracts key fields: note id/key, issuer, recipient, and recipient address
+    - Outputs a clean Excel file with consistent columns
+
+Usage:
+    python main.py -i input_folder -o output_file/Invoices.xlsx -v
+
+Dependencies:
+    - xmltodict
+    - pandas
+    - openpyxl
 """
 
 from __future__ import annotations
@@ -20,6 +34,12 @@ import xmltodict
 
 # --------------------------- Logging ---------------------------
 def setup_logging(verbose: bool) -> None:
+    """
+    Configure logging level and format.
+
+    Args:
+        verbose (bool): If True, use DEBUG level; otherwise INFO.
+    """
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(level=level, format="%(levelname)s | %(message)s")
 
@@ -27,9 +47,15 @@ def setup_logging(verbose: bool) -> None:
 # --------------------------- XML helpers ---------------------------
 def _get(d: Dict[str, Any], path: str, default: Any = None) -> Any:
     """
-    Safe nested access:
-    _get(obj, "a.b.c") -> obj["a"]["b"]["c"] or default if any key is missing.
-    Supports '@attr' for XML attributes.
+    Safely access a nested dictionary path using dot notation.
+
+    Args:
+        d (dict): Dictionary to traverse.
+        path (str): Dot-separated path (e.g. "nfeProc.NFe.infNFe").
+        default (Any): Value to return if path does not exist.
+
+    Returns:
+        Any: Value found at the given path, or default if missing.
     """
     cur = d
     for part in path.split("."):
@@ -41,8 +67,18 @@ def _get(d: Dict[str, Any], path: str, default: Any = None) -> Any:
 
 def parse_nfe_file(xml_path: Path) -> Optional[Dict[str, Any]]:
     """
-    Read an NFe XML file and return a dict with relevant fields.
-    Returns None if the file doesn't look like a valid NFe payload.
+    Parse a single NFe-like XML file into a normalized dictionary of fields.
+
+    Args:
+        xml_path (Path): Path to the XML file.
+
+    Returns:
+        dict | None: Dictionary with invoice data, or None if parsing fails.
+            Keys include:
+                - key, note_id, issuer_name, recipient_name
+                - dest_street, dest_number, dest_district, dest_city,
+                  dest_state, dest_zip, dest_country
+                - file_name
     """
     try:
         with xml_path.open("rb") as f:
@@ -106,8 +142,15 @@ def parse_nfe_file(xml_path: Path) -> Optional[Dict[str, Any]]:
 
 def parse_folder(input_dir: Path) -> Tuple[List[Dict[str, Any]], List[str]]:
     """
-    Walk the input folder, process all .xml files.
-    Returns (valid_records, error_file_names).
+    Walk through the input folder, parse all .xml files, and collect results.
+
+    Args:
+        input_dir (Path): Folder containing XML files.
+
+    Returns:
+        tuple:
+            - List[dict]: Parsed invoice records.
+            - List[str]: Names of files that failed or were ignored.
     """
     records: List[Dict[str, Any]] = []
     errors: List[str] = []
@@ -129,6 +172,12 @@ def parse_folder(input_dir: Path) -> Tuple[List[Dict[str, Any]], List[str]]:
 
 # --------------------------- CLI / Main ---------------------------
 def build_arg_parser() -> argparse.ArgumentParser:
+    """
+    Build the command-line argument parser.
+
+    Returns:
+        argparse.ArgumentParser: Configured parser with -i, -o, and -v options.
+    """
     p = argparse.ArgumentParser(description="Convert NFe XML to Excel (.xlsx).")
     p.add_argument(
         "-i",
@@ -155,6 +204,16 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    """
+    Entry point for the CLI.
+
+    Steps:
+        1. Parse arguments and configure logging.
+        2. Validate input folder.
+        3. Parse all XML files in folder.
+        4. Build DataFrame and export to Excel.
+        5. Print logs and exit with appropriate status code.
+    """
     args = build_arg_parser().parse_args()
     setup_logging(args.verbose)
 

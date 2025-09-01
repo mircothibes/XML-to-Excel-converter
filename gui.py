@@ -1,14 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Minimal XML → Excel Converter — Tkinter GUI (files-only)
+Minimal XML → Excel Converter — Tkinter GUI
 
-• One button to select one or more XML files
-• One button to choose where to save the Excel file
-• Convert button
+This module provides a simple graphical interface for converting XML invoice files
+(NFe-like structure) into a structured Excel spreadsheet (.xlsx).
 
-Dependencies: xmltodict, pandas, openpyxl
-Run: python gui_simple.py
+Main features:
+    • One button to select one or more XML files
+    • One button to choose where to save the Excel file
+    • Convert button with log display
+
+Dependencies:
+    - xmltodict
+    - pandas
+    - openpyxl
+    - tkinter (standard library)
+
+Usage:
+    python gui_simple.py
 """
 from __future__ import annotations
 
@@ -25,6 +35,17 @@ import xmltodict
 # ---------------- Parsing helpers ----------------
 
 def _get(d: Dict[str, Any], path: str, default: Any = None) -> Any:
+    """
+    Safely access a nested dictionary path using dot notation.
+
+    Args:
+        d (dict): Dictionary to traverse.
+        path (str): Dot-separated path (e.g. "nfeProc.NFe.infNFe").
+        default (Any): Value to return if path does not exist.
+
+    Returns:
+        Any: Value found at the given path, or default if missing.
+    """
     cur = d
     for part in path.split("."):
         if not isinstance(cur, dict) or part not in cur:
@@ -34,6 +55,20 @@ def _get(d: Dict[str, Any], path: str, default: Any = None) -> Any:
 
 
 def parse_nfe_file(xml_path: Path) -> Optional[Dict[str, Any]]:
+    """
+    Parse a single NFe-like XML file into a normalized dictionary of fields.
+
+    Args:
+        xml_path (Path): Path to the XML file.
+
+    Returns:
+        dict | None: Dictionary with invoice data, or None if parsing fails.
+            Keys include:
+                - key, note_id, issuer_name, recipient_name
+                - dest_street, dest_number, dest_district, dest_city,
+                  dest_state, dest_zip, dest_country
+                - file_name
+    """
     try:
         with xml_path.open("rb") as f:
             data = xmltodict.parse(f)
@@ -85,7 +120,27 @@ def parse_nfe_file(xml_path: Path) -> Optional[Dict[str, Any]]:
 # ---------------- Minimal GUI ----------------
 
 class App(ttk.Frame):
+    """
+    Tkinter GUI for converting XML invoice files into an Excel spreadsheet.
+
+    Workflow:
+        1. User selects one or more XML files via file dialog.
+        2. User specifies the destination Excel file (.xlsx).
+        3. On "Convert", the selected XMLs are parsed and results exported.
+
+    Attributes:
+        selected_files (List[Path]): List of chosen XML file paths.
+        output_var (tk.StringVar): Holds the path to the Excel output file.
+        listbox (tk.Listbox): Widget listing selected XML files.
+        txt (tk.Text): Log output widget.
+    """
     def __init__(self, master: tk.Tk) -> None:
+        """
+        Initialize the GUI application.
+
+        Args:
+            master (tk.Tk): Root Tkinter window.
+        """
         super().__init__(master, padding=12)
         self.master.title("XML → Excel Converter — Minimal GUI")
         self.master.geometry("760x520")
@@ -96,6 +151,12 @@ class App(ttk.Frame):
         self._build_ui()
 
     def _build_ui(self) -> None:
+        """
+         - File selection list and buttons
+        - Output file entry and save button
+        - Convert button
+        - Log area
+        """
         grp_files = ttk.LabelFrame(self, text="Files")
         grp_files.grid(row=0, column=0, sticky="nsew", padx=4, pady=4)
         ttk.Button(grp_files, text="Select XML files…", command=self._choose_files).grid(row=0, column=0, padx=6, pady=6, sticky="w")
@@ -132,6 +193,10 @@ class App(ttk.Frame):
         self.pack(fill="both", expand=True)
 
     def _choose_files(self) -> None:
+        """
+        Open a dialog to select one or more XML files.
+        Updates `selected_files` and refreshes the listbox.
+        """
         file_paths = filedialog.askopenfilenames(
             title="Select XML files…",
             filetypes=[("XML files", "*.xml *.XML"), ("All files", "*.*")],
@@ -144,6 +209,10 @@ class App(ttk.Frame):
         self._log(f"Selected {len(self.selected_files)} file(s).\n")
 
     def _choose_output(self) -> None:
+        """
+        Open a dialog to select the Excel output file.
+        Updates `output_var`.
+        """
         initial = Path(self.output_var.get()).parent if self.output_var.get() else Path.cwd()
         f = filedialog.asksaveasfilename(
             title="Save Excel as…",
@@ -156,6 +225,13 @@ class App(ttk.Frame):
             self.output_var.set(f)
 
     def _on_convert(self) -> None:
+        """
+        Execute the conversion process:
+        - Parse selected XML files
+        - Build DataFrame
+        - Save to Excel
+        Logs progress and results in the log box.
+        """
         if not self.selected_files:
             messagebox.showinfo("Select files", "Please select one or more XML files to convert.")
             return
@@ -206,11 +282,20 @@ class App(ttk.Frame):
             self._log(f"ERROR: {e}\n")
 
     def _refresh_file_list(self) -> None:
+        """
+        Refresh the listbox widget with the currently selected files.
+        """
         self.listbox.delete(0, "end")
         for p in self.selected_files:
             self.listbox.insert("end", p.name)
 
     def _log(self, msg: str) -> None:
+        """
+        Append a message to the log text box and scroll to bottom.
+
+        Args:
+            msg (str): The message to display.
+        """
         self.txt.insert("end", msg)
         self.txt.see("end")
 
